@@ -1,0 +1,16 @@
+# Studenti konfiguratsioon
+student_username: "jaan.tamm"
+server_ip: "192.168.5.232"
+domain_name: "lamp.local"
+
+# Apache konfiguratsioon
+server_admin: "webmaster@lamp.local"
+document_root: "/var/www/{{ domain_name }}/public_html"
+
+# MySQL konfiguratsioon
+mysql_host: "localhost"
+mysql_database: "lamp_app"
+mysql_user: "lamp_user"
+
+# PHP konfiguratsioon
+php_version: "8.1"

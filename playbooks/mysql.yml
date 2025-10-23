@@ -1,0 +1,75 @@
+---
+- name: MySQL andmebaasi paigaldus
+  hosts: lamp_servers
+  become: yes
+  vars_prompt:
+    - name: mysql_root_password
+      prompt: "Sisesta MySQL root parool"
+      private: yes
+      confirm: yes
+
+    - name: mysql_app_password
+      prompt: "Sisesta rakenduse andmebaasi parool"
+      private: yes
+      confirm: yes
+
+  tasks:
+    - name: Paigalda MySQL server
+      apt:
+        name: 
+          - mysql-server
+          - mysql-client
+        state: present
+
+    - name: Paigalda Python MySQL kliendi jaoks vajalikud paketid
+      apt:
+        name: python3-pymysql
+        state: present
+
+    - name: Kontrolli, et MySQL teenus töötab
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Oota, et MySQL port avaneks
+      wait_for:
+        port: 3306
+        host: 127.0.0.1
+        state: started
+        delay: 10
+        timeout: 60
+
+    - name: Sea MySQL root parool (uue meetodiga)
+      shell: |
+        sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ mysql_root_password }}';"
+        sudo mysql -e "FLUSH PRIVILEGES;"
+      args:
+        executable: /bin/bash
+
+    - name: Loo .my.cnf fail root kasutajale
+      copy:
+        content: |
+          [client]
+          user=root
+          password={{ mysql_root_password }}
+        dest: /root/.my.cnf
+        mode: '0600'
+
+    - name: Loo andmebaas
+      mysql_db:
+        name: "{{ mysql_database }}"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Loo andmebaasi kasutaja
+      mysql_user:
+        name: "{{ mysql_user }}"
+        password: "{{ mysql_app_password }}"
+        priv: "{{ mysql_database }}.*:ALL"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock

@@ -1,0 +1,38 @@
+---
+- name: Süsteemi ettevalmistus
+  hosts: lamp_servers
+  become: yes
+  tasks:
+    - name: Uuenda pakettide indeksit
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Paigalda süsteemi paketid
+      apt:
+        name:
+          - curl
+          - wget
+          - gnupg
+          - software-properties-common
+          - ufw
+        state: present
+
+    - name: Seadista ajavöönd
+      timezone:
+        name: Europe/Tallinn
+
+    - name: Luba firewall pordid
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "22"
+        - "80"
+        - "443"
+
+    - name: Luba firewall
+      ufw:
+        state: enabled
+        policy: deny

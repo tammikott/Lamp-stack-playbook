@@ -1,0 +1,32 @@
+---
+- name: PHP paigaldus
+  hosts: lamp_servers
+  become: yes
+  tasks:
+    - name: Paigalda PHP koos Apache'ga
+      apt:
+        name:
+          - "php"
+          - "libapache2-mod-php"
+        state: present
+
+    - name: Loo PHP test leht
+      copy:
+        content: |
+          <?php
+          echo "<h1>LAMP Stack Test - TÖÖTAB!</h1>";
+          echo "<p>Server: <?php echo gethostname(); ?></p>";
+          echo "<p>PHP Version: " . phpversion() . "</p>";
+          echo "<p>Student: {{ student_username }}</p>";
+          echo "<p>MySQL: Paigaldatud</p>";
+          ?>
+        dest: "{{ document_root }}/index.php"
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+  handlers:
+    - name: restart apache
+      service:
+        name: apache2
+        state: restarted
